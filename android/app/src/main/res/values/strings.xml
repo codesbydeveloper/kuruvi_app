@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<string name="app_name">mlt</string>
+<string name="facebook_app_id">TEST</string>
+<string name="fb_login_protocol_scheme">TEST</string>
+<string name="facebook_client_token">TEST</string>
+</resources>
+
