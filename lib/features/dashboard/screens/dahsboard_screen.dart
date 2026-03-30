@@ -20,14 +20,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final LocationService _locationService = LocationService();
   final StoreApiService _storeApiService = StoreApiService();
   final LocalStorageService _localStorageService = LocalStorageService();
+  final ValueNotifier<String?> _etaNotifier = ValueNotifier<String?>(null);
   bool _isFetchingNearestStore = false;
 
-  final _tabs = const [
-    HomeScreen(),
-    CategoryScreen(),
-    _CartPlaceholder(),
-    _FavoritesPlaceholder(),
-    _AccountPlaceholder(),
+  late final List<Widget> _tabs = [
+    HomeScreen(etaListenable: _etaNotifier),
+    const CategoryScreen(),
+    const _CartPlaceholder(),
+    const _FavoritesPlaceholder(),
+    const _AccountPlaceholder(),
   ];
 
   @override
@@ -54,6 +55,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
       AppLogger.success('Nearest store fetched successfully.');
       AppLogger.log('Nearest store response: $response');
+      await _saveEta(response);
       await _saveFirstStoreId(response);
     } catch (e) {
       AppLogger.error('Failed to fetch nearest store: $e');
@@ -83,6 +85,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     } catch (e) {
       AppLogger.error('Failed to save nearest store id: $e');
+    }
+  }
+
+  Future<void> _saveEta(dynamic response) async {
+    try {
+      final data = response is Map ? response['data'] : null;
+      if (data is! Map) return;
+      final etaValue = data['eta'];
+      if (etaValue == null) return;
+      final etaText = etaValue.toString().trim();
+      if (etaText.isEmpty) return;
+      _etaNotifier.value = etaText;
+      await _localStorageService.saveNearestStoreEta(etaText);
+    } catch (e) {
+      AppLogger.error('Failed to save nearest store ETA: $e');
     }
   }
 

@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:kuruvikal/core/constants/app_colors.dart';
 import 'package:kuruvikal/core/constants/asset_path.dart';
+import 'package:kuruvikal/core/services/location_service.dart';
 import 'package:kuruvikal/core/services/navigation_service.dart';
 import 'package:kuruvikal/features/category/providers/category_provider.dart';
 import 'package:kuruvikal/features/sub-category/screens/sub_category_screen.dart';
@@ -16,10 +17,23 @@ class CategoryScreen extends StatefulWidget {
 }
 
 class _CategoryScreenState extends State<CategoryScreen> {
+  String _addressTitle = 'Your Location';
+  String _addressSubtitle = 'Fetching location...';
+
   @override
   void initState() {
     super.initState();
     Future.microtask(() => context.read<CategoryProvider>().fetchCategories());
+    _loadAddress();
+  }
+
+  Future<void> _loadAddress() async {
+    final info = await LocationService().getCurrentAddressInfo();
+    if (!mounted) return;
+    setState(() {
+      _addressTitle = info?.title ?? 'Your Location';
+      _addressSubtitle = info?.subtitle ?? 'Location unavailable';
+    });
   }
 
   @override
@@ -54,7 +68,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                               Row(
                                 children: [
                                   Text(
-                                    'Subhlaxmi Residency',
+                                    _addressTitle,
                                     style: TextStyle(
                                       fontSize: 15.sp,
                                       fontWeight: FontWeight.w700,
@@ -70,7 +84,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                 ],
                               ),
                               Text(
-                                'C.R. Colony, Dindoli, Surat, Gujarat 394210, India',
+                                _addressSubtitle,
                                 style: TextStyle(
                                   fontSize: 13.sp,
                                   color: AppColors.blackTextColor,

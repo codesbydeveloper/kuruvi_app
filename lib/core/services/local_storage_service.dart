@@ -8,6 +8,7 @@ class LocalStorageService {
   static const _tokenKey = "auth_token";
   static const _onboardedKey = 'onboarding_completed';
   static const _nearestStoreIdKey = "nearest_store_id";
+  static const _nearestStoreEtaKey = "nearest_store_eta";
 
   SharedPreferences? _prefs;
 
@@ -74,5 +75,18 @@ class LocalStorageService {
 
   Future<void> clearNearestStoreId() async {
     await remove(_nearestStoreIdKey);
+  }
+
+  // Nearest store ETA helpers
+  Future<void> saveNearestStoreEta(String eta) async {
+    await setString(_nearestStoreEtaKey, eta);
+  }
+
+  Future<String?> getNearestStoreEta() async {
+    return getString(_nearestStoreEtaKey);
+  }
+
+  Future<void> clearNearestStoreEta() async {
+    await remove(_nearestStoreEtaKey);
   }
 }

@@ -1,39 +1,93 @@
 import 'dart:collection';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kuruvikal/core/constants/app_colors.dart';
 import 'package:kuruvikal/core/constants/asset_path.dart';
+import 'package:kuruvikal/core/services/location_service.dart';
+import 'package:kuruvikal/core/services/local_storage_service.dart';
+import 'package:kuruvikal/core/services/navigation_service.dart';
+import 'package:kuruvikal/features/location/screens/select_locaion_screen.dart';
+import 'package:kuruvikal/features/profile/screens/profile_screen.dart';
+import 'package:kuruvikal/features/sub-category/screens/seasonal_fruits_screen.dart';
 import 'package:sizer/sizer.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.etaListenable});
+  final ValueListenable<String?>? etaListenable;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String _addressLine = 'Fetching location...';
+  String _etaText = '...';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAddress();
+    _loadEta();
+  }
+
+  Future<void> _loadAddress() async {
+    final info = await LocationService().getCurrentAddressInfo();
+    if (!mounted) return;
+    setState(() {
+      _addressLine = info?.subtitle ?? 'Location unavailable';
+    });
+  }
+
+  Future<void> _loadEta() async {
+    final eta = await LocalStorageService().getNearestStoreEta();
+    if (!mounted) return;
+    setState(() {
+      _etaText = _formatEta(eta);
+    });
+  }
+
+  String _formatEta(String? eta) {
+    if (eta == null || eta.trim().isEmpty) return '...';
+    final match = RegExp(r'(\d+(\.\d+)?)').firstMatch(eta);
+    if (match != null) return '${match.group(1)} Mins';
+    return eta;
+  }
+
+  Widget _buildHeader() {
+    final listenable = widget.etaListenable;
+    if (listenable == null) {
+      return _GreenHeader(addressLine: _addressLine, etaText: _etaText);
+    }
+    return ValueListenableBuilder<String?>(
+      valueListenable: listenable,
+      builder: (context, value, _) {
+        final etaText = _formatEta(value) == '...'
+            ? _etaText
+            : _formatEta(value);
+        return _GreenHeader(addressLine: _addressLine, etaText: etaText);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.whiteColor,
-      body: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const _GreenHeader(),
-              const _ExploreBanner(),
-              const SizedBox(height: 10),
-              const _OfferCard(),
-              const SizedBox(height: 14),
-              const _MostShoppedSection(),
-              const SizedBox(height: 14),
-              const _LowestPriceSection(),
-              const SizedBox(height: 20),
-            ],
-          ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            _buildHeader(),
+            const _ExploreBanner(),
+            const SizedBox(height: 10),
+            const _OfferCard(),
+            const SizedBox(height: 14),
+            const _MostShoppedSection(),
+            const SizedBox(height: 14),
+            const _LowestPriceSection(),
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );
@@ -41,7 +95,9 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _GreenHeader extends StatelessWidget {
-  const _GreenHeader();
+  const _GreenHeader({required this.addressLine, required this.etaText});
+  final String addressLine;
+  final String etaText;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +105,7 @@ class _GreenHeader extends StatelessWidget {
       color: AppColors.greenColor,
       child: Column(
         children: [
+          SizedBox(height: 4.h),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
             child: Row(
@@ -56,51 +113,61 @@ class _GreenHeader extends StatelessWidget {
                 Image.asset(ImageAssetPath.locationIcon),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '11 Mins',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w700,
+                  child: GestureDetector(
+                    onTap: () {
+                      NavigationService().push(const SelectLocationScreen());
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          etaText,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Mahindra Colony, Near Police Station, Dindoli, Surat...',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w500,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                addressLine,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                          const Icon(
-                            Icons.keyboard_arrow_down,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ],
-                      ),
-                    ],
+                            const SizedBox(width: 6),
+                            const Icon(
+                              Icons.keyboard_arrow_down,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.yellowColor,
-                    shape: BoxShape.circle,
+                GestureDetector(
+                  onTap: () {
+                    NavigationService().push(const ProfileScreen());
+                  },
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.yellowColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Image.asset(ImageAssetPath.profileIcon),
                   ),
-                  child: Image.asset(ImageAssetPath.profileIcon),
                 ),
               ],
             ),
@@ -263,7 +330,7 @@ class _QuickCategories extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: AppColors.whiteColor,
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
                       height: 1.2,
                     ),
@@ -474,11 +541,12 @@ class _MiniProductCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Stack(
+            clipBehavior: Clip.none,
             children: [
               Container(
-                height: 78,
+                height: 10.h,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.borderGreyLightColor2),
                 ),
@@ -492,21 +560,23 @@ class _MiniProductCard extends StatelessWidget {
                 ),
               ),
               Positioned(
-                top: -4,
-                right: -4,
+                top: -6,
+                right: -6,
                 child: Container(
-                  width: 24,
-                  height: 24,
+                  width: 26,
+                  height: 26,
                   decoration: BoxDecoration(
                     color: AppColors.greenColor,
                     shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.whiteColor, width: 2),
                   ),
                   child: const Icon(Icons.add, color: Colors.white, size: 16),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
+
           Text(
             product.title,
             maxLines: 1,
@@ -517,61 +587,104 @@ class _MiniProductCard extends StatelessWidget {
               color: AppColors.blackTextColor,
             ),
           ),
-          const SizedBox(height: 2),
-          
+          const SizedBox(height: 4),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-            product.off,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.brownColor,
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFE0E0E0)),
-            ),
-            child: Text(
-              product.size,
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: AppColors.greyTextColor2,
-                fontWeight: FontWeight.w600,
+                product.off,
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.brownColor,
+                ),
               ),
-            ),
-          ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(5),
+                  border: Border.all(color: const Color(0xFFE0E0E0)),
+                ),
+                child: Text(
+                  product.size,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: AppColors.greyTextColor2,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 4),
+
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
                 product.price,
                 style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.greenColor,
                 ),
               ),
-              const SizedBox(width: 4),
-              Text(
-                product.oldPrice,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: AppColors.brownColor,
-                  decoration: TextDecoration.lineThrough,
+              _SlantedStrikeText(
+                text: product.oldPrice,
+                textStyle: TextStyle(
+                  fontSize: 13.sp,
+                  color: AppColors.redColor,
+                  fontWeight: FontWeight.w700,
                 ),
+                lineColor: AppColors.redColor,
               ),
             ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SlantedStrikeText extends StatelessWidget {
+  const _SlantedStrikeText({
+    required this.text,
+    required this.textStyle,
+    required this.lineColor,
+    this.lineThickness = 1,
+    this.angle = -0.12,
+  });
+
+  final String text;
+  final TextStyle textStyle;
+  final Color lineColor;
+  final double lineThickness;
+  final double angle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Text(text, style: textStyle),
+        Positioned.fill(
+          child: IgnorePointer(
+            child: Transform.rotate(
+              angle: angle,
+              child: Align(
+                alignment: Alignment.center,
+                child: FractionallySizedBox(
+                  widthFactor: 1.1,
+                  child: Container(height: lineThickness, color: lineColor),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -605,11 +718,7 @@ class _LowestPriceSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Image.asset(
-                ImageAssetPath.dropIcon,
-                width: 16,
-                height: 16,
-              ),
+              Image.asset(ImageAssetPath.dropIcon, width: 16, height: 16),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -617,7 +726,7 @@ class _LowestPriceSection extends StatelessWidget {
                   style: TextStyle(
                     color: AppColors.brownColor,
                     fontSize: 17.sp,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -639,13 +748,18 @@ class _LowestPriceSection extends StatelessWidget {
           SizedBox(height: 2.h),
           _MiniProductRow(products: products),
           SizedBox(height: 2.h),
-          Center(
-            child: Text(
-              'See All Products >>',
-              style: TextStyle(
-                color: AppColors.brownColor,
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w700,
+          GestureDetector(
+            onTap: () {
+              NavigationService().push(SeasonalFruitsScreen());
+            },
+            child: Center(
+              child: Text(
+                'See All Products >>',
+                style: TextStyle(
+                  color: AppColors.brownColor,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
