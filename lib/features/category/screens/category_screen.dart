@@ -307,6 +307,8 @@ class _CategorySection extends StatelessWidget {
                 final sub = children[index];
                 return _ProductTile(
                   sub: sub,
+                  categoryId: category.id,
+                  categoryName: category.name,
                   tileWidth: tileWidth,
                   imageHeight: imageHeight,
                 );
@@ -324,11 +326,15 @@ class _CategorySection extends StatelessWidget {
 class _ProductTile extends StatelessWidget {
   const _ProductTile({
     required this.sub,
+    required this.categoryId,
+    required this.categoryName,
     required this.tileWidth,
     required this.imageHeight,
   });
 
   final dynamic sub;
+  final String categoryId;
+  final String categoryName;
   final double tileWidth;
   final double imageHeight;
 
@@ -336,7 +342,10 @@ class _ProductTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        NavigationService().push(const SubCategoryScreen());
+        NavigationService().push(SubCategoryScreen(
+          categoryId: categoryId,
+          categoryName: categoryName,
+        ));
       },
       child: SizedBox(
         width: tileWidth,

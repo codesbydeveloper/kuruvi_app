@@ -20,7 +20,7 @@ class AppColors {
   /// black color
   static const Color blackColor = Color(0xFF000000);
 
-  // text color
+  /// text color
   static const Color blackTextColor = Color(0xFF2A2A2A);
   static const Color greyTextColor = Color(0xFF5E5E5E);
   static const Color greyTextColor2 = Color(0xFF757575);
@@ -31,6 +31,10 @@ class AppColors {
 
   /// main green col
   static final Color greenColor = Color(0xFF00A275);
+  static final Color greenColor2 = Color(0xFF008E67);
+  static final Color lightGreenColor = Color(0xFF70E3C1);
+  static final Color lightGreenColor2 = Color(0xFF19C292);
+  static final Color borderGreenColor = Color(0xFF31E7B5);
 
   /// brown color
   static final Color brownColor = Color(0xFF89292D);
@@ -48,15 +52,11 @@ class AppColors {
 
   static final Color safeareBackGround = mainColor;
 
-  // gradients
+  /// gradients
   static const LinearGradient categoryTopGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [
-      Color(0xFFFFFFFF),
-      Color(0xFFF2EEEE),
-      Color(0xFFFFE7A7),
-    ],
+    colors: [Color(0xFFFFFFFF), Color(0xFFF2EEEE), Color(0xFFFFE7A7)],
     stops: [0.0, 0.4, 1.0],
   );
 
@@ -64,6 +64,12 @@ class AppColors {
     colors: [Color(0xFFFFE0EC), Color(0xFFFFF0F5)],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
+  );
+
+  static const LinearGradient homeGradient = LinearGradient(
+    begin: Alignment.bottomCenter,
+    end: Alignment.topCenter,
+    colors: [Color(0xFFFFFFFF), Color(0xFFFFDC7E)],
   );
 
   static final themeData = ThemeData(

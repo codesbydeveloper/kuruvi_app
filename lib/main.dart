@@ -4,6 +4,7 @@ import 'package:kuruvikal/core/services/navigation_service.dart';
 import 'package:kuruvikal/features/auth/providers/auth_provider.dart';
 import 'package:kuruvikal/features/auth/screens/splash_screen.dart';
 import 'package:kuruvikal/features/category/providers/category_provider.dart';
+import 'package:kuruvikal/features/sub-category/providers/sub_category_provider.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
@@ -17,8 +18,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
-  @override
   @override
   Widget build(BuildContext context) {
     return OverlaySupport.global(
@@ -26,6 +25,7 @@ class MyApp extends StatelessWidget {
         providers: [
           ChangeNotifierProvider(create: (_) => AuthProvider()),
           ChangeNotifierProvider(create: (_) => CategoryProvider()),
+          ChangeNotifierProvider(create: (_) => SubCategoryProvider()),
         ],
         child: Sizer(
           builder: (context, orientation, deviceType) {

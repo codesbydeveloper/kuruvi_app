@@ -45,6 +45,7 @@ dependencies:
   flutter_easyloading: ^3.0.5
   flutter_background_service: ^5.1.0
   geolocator: ^14.0.2
+  flutter_svg: ^2.2.4
 
 dev_dependencies:
   flutter_test:

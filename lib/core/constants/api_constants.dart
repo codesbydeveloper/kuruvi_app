@@ -14,6 +14,17 @@ class ApiConstants {
   // category
   static const String getCategories = "categories/menu";
 
+  // sub-categories
+  static String getSubCategories(String categoryId) =>
+      "categories/$categoryId/subcategories";
+
+  // inventory products by store + sub-category
+  static String getInventoryProducts(
+    String storeId,
+    String categoryId,
+  ) =>
+      "inventories/$storeId/products?categoryId=$categoryId";
+
   // get stores
   static const String nearestStore = "stores/nearest";
 }

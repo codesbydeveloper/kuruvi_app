@@ -1,12 +1,23 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:kuruvikal/core/constants/api_constants.dart';
 import 'package:kuruvikal/core/constants/app_colors.dart';
 import 'package:kuruvikal/core/constants/asset_path.dart';
 import 'package:kuruvikal/core/services/navigation_service.dart';
+import 'package:kuruvikal/features/sub-category/models/inventory_product_model.dart';
+import 'package:kuruvikal/features/sub-category/providers/sub_category_provider.dart';
 import 'package:kuruvikal/features/sub-category/screens/seasonal_fruits_screen.dart';
+import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
 class SubCategoryScreen extends StatefulWidget {
-  const SubCategoryScreen({super.key});
+  const SubCategoryScreen({
+    super.key,
+    required this.categoryId,
+    this.categoryName,
+  });
+  final String categoryId;
+  final String? categoryName;
 
   @override
   State<SubCategoryScreen> createState() => _SubCategoryScreenState();
@@ -14,82 +25,68 @@ class SubCategoryScreen extends StatefulWidget {
 
 class _SubCategoryScreenState extends State<SubCategoryScreen> {
   int _selectedCategoryIndex = 0;
+  String? _selectedSubCategoryId;
 
-  // Fixed: image is now a proper named parameter
-  final List<_SideCategory> _categories = const [
-    _SideCategory(label: 'Makeup',      color: Color(0xFFFFF3E0), image: 'assets/product/cat1.png'),
-    _SideCategory(label: 'Soap',        color: Color(0xFFE8F5E9), image: 'assets/product/cat2.png'),
-    _SideCategory(label: 'Lipstic',     color: Color(0xFFFCE4EC), image: 'assets/product/cat3.png'),
-    _SideCategory(label: 'Body Milk',     color: Color(0xFFE3F2FD), image: 'assets/product/cat4.png'),
-    _SideCategory(label: 'Newly Added', color: Color(0xFFF3E5F5), image: 'assets/product/cat5.png'),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() async {
+      final provider = context.read<SubCategoryProvider>();
+      await provider.fetchSubCategories(widget.categoryId);
+      if (!mounted) return;
+      if (provider.subCategories.isNotEmpty) {
+        final first = provider.subCategories.first;
+        setState(() {
+          _selectedCategoryIndex = 0;
+          _selectedSubCategoryId = first.id;
+        });
+        await provider.fetchProductsForSubCategory(first.id);
+      }
+    });
+  }
 
-  // Fixed: image field added to both the list and the class
-  final List<_ProductItem> _products = const [
-    _ProductItem(
-      title: 'Lorem ipsum dolor sit ametisa, consectetur adipiscing elit.',
-      description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.',
-      weight: '100g',
-      originalPrice: '₹ 500.00',
-      discountedPrice: '₹ 350.00',
-      rating: 4.5,
-      reviews: 234,
-      image: 'assets/product/product1.png',
-    ),
-    _ProductItem(
-      title: 'Lorem ipsum dolor sit ametisa, consectetur adipiscing elit.',
-      description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.',
-      weight: '100g',
-      originalPrice: null,
-      discountedPrice: '₹ 150.00',
-      rating: 4.5,
-      reviews: 234,
-      image: 'assets/product/product2.png',
-    ),
-    _ProductItem(
-      title: 'Lorem ipsum dolor sit ametisa, consectetur adipiscing elit.',
-      description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.',
-      weight: '100g',
-      originalPrice: '₹ 500.00',
-      discountedPrice: '₹ 350.00',
-      rating: 4.9,
-      reviews: 299,
-      image: 'assets/product/product1.png',
-    ),
-    _ProductItem(
-      title: 'Lorem ipsum dolor sit ametisa, consectetur adipiscing elit.',
-      description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.',
-      weight: '100g',
-      originalPrice: null,
-      discountedPrice: '₹ 150.00',
-      rating: 4.9,
-      reviews: 299,
-      image: 'assets/product/product2.png',
-    ),
-    _ProductItem(
-      title: 'Lorem ipsum dolor sit ametisa, consectetur adipiscing elit.',
-      description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.',
-      weight: '100g',
-      originalPrice: '₹ 500.00',
-      discountedPrice: '₹ 350.00',
-      rating: 4.2,
-      reviews: 102,
-      image: 'assets/product/product1.png',
-    ),
-    _ProductItem(
-      title: 'Lorem ipsum dolor sit ametisa, consectetur adipiscing elit.',
-      description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.',
-      weight: '100g',
-      originalPrice: null,
-      discountedPrice: '₹ 150.00',
-      rating: 4.2,
-      reviews: 102,
-      image: 'assets/product/product2.png',
-    ),
-  ];
+  List<_ProductItem> _mapProducts(List<InventoryProduct> items) {
+    return items.map((item) {
+      final variant = item.variant;
+      final name = variant.product.name.isNotEmpty
+          ? variant.product.name
+          : 'Product';
+      final brand = variant.product.brand;
+      final weightLabel = variant.size.isNotEmpty && variant.unit.isNotEmpty
+          ? '${variant.size}${variant.unit}'
+          : (variant.weight > 0 ? '${variant.weight}g' : '1 pc');
+      final imageUrl = _resolveImageUrl(
+          variant.images.isNotEmpty ? variant.images.first : '');
+
+      return _ProductItem(
+        title: name,
+        description: brand.isNotEmpty ? brand : ' ',
+        weight: weightLabel,
+        originalPrice:
+            variant.mrp > 0 ? '₹ ${variant.mrp.toStringAsFixed(0)}' : null,
+        discountedPrice: '₹ ${item.price.toStringAsFixed(0)}',
+        rating: null,
+        reviews: null,
+        image: imageUrl,
+      );
+    }).toList();
+  }
+
+  String _resolveImageUrl(String raw) {
+    if (raw.isEmpty) return '';
+    if (raw.startsWith('http')) return raw;
+    final base = ApiConstants.baseUrl.replaceAll('/api/', '/');
+    return '$base$raw';
+  }
+
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<SubCategoryProvider>();
+    final subCategories = provider.subCategories;
+    final title = widget.categoryName ?? provider.category?.name ?? 'Sub Category';
+    final products = _mapProducts(provider.products);
+
     return Scaffold(
       backgroundColor: AppColors.whiteColor,
 
@@ -101,7 +98,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
           child: const Icon(Icons.arrow_back_sharp, color: Colors.black),
         ),
         title: Text(
-          'Beauty & Wellness',
+          title,
           style: TextStyle(
             fontSize: 17.sp,
             fontWeight: FontWeight.w700,
@@ -139,69 +136,112 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
           // ── Left category sidebar ──────────────────────────────────────
           SizedBox(
             width: 80,
-            child: ListView.builder(
-              padding: EdgeInsets.zero,
-              itemCount: _categories.length,
-              itemBuilder: (context, index) {
-                final cat = _categories[index];
-                final isSelected = _selectedCategoryIndex == index;
-                return GestureDetector(
-                  onTap: () =>
-                      setState(() => _selectedCategoryIndex = index),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Column(
-                      children: [
-                        // Category image inside coloured rounded tile
-                        Container(
-                          width: 55,
-                          height: 55,
-                          margin:
-                          const EdgeInsets.symmetric(horizontal: 14),
-                          decoration: BoxDecoration(
-                            color: AppColors.whiteColor,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: isSelected
-                                  ? AppColors.yellowColor
-                                  : AppColors.borderGreyLightColor2,
-                              width: 2,
+            child: provider.isLoading && subCategories.isEmpty
+                ? const Center(
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : subCategories.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Text(
+                            'No sub categories',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: AppColors.greyTextColor,
                             ),
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(7),
-                            child: Image.asset(
-                              cat.image,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Icon(
-                                Icons.category_outlined,
-                                size: 22,
-                                color: AppColors.iconGreyColor,
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: EdgeInsets.zero,
+                        itemCount: subCategories.length,
+                        itemBuilder: (context, index) {
+                          final cat = subCategories[index];
+                          final isSelected = _selectedSubCategoryId != null
+                              ? _selectedSubCategoryId == cat.id
+                              : _selectedCategoryIndex == index;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _selectedCategoryIndex = index;
+                                _selectedSubCategoryId = cat.id;
+                              });
+                              provider.fetchProductsForSubCategory(cat.id);
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8),
+                              child: Column(
+                                children: [
+                                  // Category image inside rounded tile
+                                  Container(
+                                    width: 55,
+                                    height: 55,
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 14),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.whiteColor,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? AppColors.yellowColor
+                                            : AppColors
+                                                .borderGreyLightColor2,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(7),
+                                      child: CachedNetworkImage(
+                                        imageUrl: cat.image,
+                                        fit: BoxFit.cover,
+                                        placeholder: (context, url) => Center(
+                                          child: SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: AppColors
+                                                  .borderGreyLightColor2,
+                                            ),
+                                          ),
+                                        ),
+                                        errorWidget: (context, url, error) =>
+                                            Icon(
+                                          Icons.category_outlined,
+                                          size: 22,
+                                          color: AppColors.iconGreyColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    cat.name,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                      color: isSelected
+                                          ? AppColors.blackTextColor
+                                          : AppColors.greyTextColor,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          cat.label,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: isSelected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            color: isSelected
-                                ? AppColors.blackTextColor
-                                : AppColors.greyTextColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+                          );
+                        },
+                      ),
           ),
 
           Container(
@@ -228,34 +268,54 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
 
                 // Product grid
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
-                    itemCount: (_products.length / 2).ceil(),
-                    itemBuilder: (context, rowIndex) {
-                      final leftIndex = rowIndex * 2;
-                      final rightIndex = leftIndex + 1;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: _ProductCard(
-                                  product: _products[leftIndex]),
+                  child: provider.isProductsLoading
+                      ? const Center(
+                          child: SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : products.isEmpty
+                          ? Center(
+                              child: Text(
+                                'No products available',
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: AppColors.greyTextColor,
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              itemCount: (products.length / 2).ceil(),
+                              itemBuilder: (context, rowIndex) {
+                                final leftIndex = rowIndex * 2;
+                                final rightIndex = leftIndex + 1;
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: _ProductCard(
+                                            product: products[leftIndex]),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: rightIndex < products.length
+                                            ? _ProductCard(
+                                                product:
+                                                    products[rightIndex])
+                                            : const SizedBox(),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: rightIndex < _products.length
-                                  ? _ProductCard(
-                                  product: _products[rightIndex])
-                                  : const SizedBox(),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
                 ),
               ],
             ),
@@ -440,6 +500,65 @@ class _ProductCard extends StatelessWidget {
   const _ProductCard({required this.product});
   final _ProductItem product;
 
+  Widget _buildImage() {
+    if (product.image.isEmpty) {
+      return Container(
+        height: 130,
+        color: AppColors.borderGreyLightColor2,
+        child: Center(
+          child: Icon(Icons.image_outlined,
+              size: 36, color: AppColors.iconGreyColor),
+        ),
+      );
+    }
+
+    if (product.image.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: product.image,
+        height: 130,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          height: 130,
+          color: AppColors.borderGreyLightColor2,
+          child: Center(
+            child: SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.borderGreyLightColor2,
+              ),
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => Container(
+          height: 130,
+          color: AppColors.borderGreyLightColor2,
+          child: Center(
+            child: Icon(Icons.image_outlined,
+                size: 36, color: AppColors.iconGreyColor),
+          ),
+        ),
+      );
+    }
+
+    return Image.asset(
+      product.image,
+      height: 130,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Container(
+        height: 130,
+        color: AppColors.borderGreyLightColor2,
+        child: Center(
+          child: Icon(Icons.image_outlined,
+              size: 36, color: AppColors.iconGreyColor),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -457,20 +576,7 @@ class _ProductCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadiusGeometry.circular(12),
-                  child: Image.asset(
-                    product.image,
-                    height: 130,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      height: 130,
-                      color: AppColors.borderGreyLightColor2,
-                      child: Center(
-                        child: Icon(Icons.image_outlined,
-                            size: 36, color: AppColors.iconGreyColor),
-                      ),
-                    ),
-                  ),
+                  child: _buildImage(),
                 ),
                 // Bookmark icon (top-left)
                 Positioned(
@@ -518,22 +624,24 @@ class _ProductCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Rating
-                  Row(
-                    children: [
-                      Icon(Icons.star,
-                          size: 10, color: AppColors.greenColor),
-                      const SizedBox(width: 2),
-                      Text(
-                        '${product.rating} (${product.reviews})',
-                        style: TextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.greenColor),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 3),
+                  if (product.rating != null &&
+                      product.reviews != null) ...[
+                    Row(
+                      children: [
+                        Icon(Icons.star,
+                            size: 10, color: AppColors.greenColor),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${product.rating} (${product.reviews})',
+                          style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.greenColor),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                  ],
 
                   // Title
                   Text(
@@ -634,17 +742,6 @@ class _ProductCard extends StatelessWidget {
 // ── Data models ───────────────────────────────────────────────────────────────
 
 /// Fixed: `image` is now a proper named required field.
-class _SideCategory {
-  final String label;
-  final Color color;
-  final String image;
-  const _SideCategory({
-    required this.label,
-    required this.color,
-    required this.image,
-  });
-}
-
 /// Fixed: `image` field added; both the class definition and all
 /// instantiation sites are consistent.
 class _ProductItem {
@@ -653,8 +750,8 @@ class _ProductItem {
   final String weight;
   final String? originalPrice;
   final String discountedPrice;
-  final double rating;
-  final int reviews;
+  final double? rating;
+  final int? reviews;
   final String image;
 
   const _ProductItem({
@@ -663,8 +760,8 @@ class _ProductItem {
     required this.weight,
     this.originalPrice,
     required this.discountedPrice,
-    required this.rating,
-    required this.reviews,
+    this.rating,
+    this.reviews,
     required this.image,
   });
 }

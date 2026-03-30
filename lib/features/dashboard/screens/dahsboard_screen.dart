@@ -5,6 +5,7 @@ import 'package:kuruvikal/core/services/location_service.dart';
 import 'package:kuruvikal/core/services/store_api_service.dart';
 import 'package:kuruvikal/core/utils/logger.dart';
 import 'package:kuruvikal/features/category/screens/category_screen.dart';
+import 'package:kuruvikal/features/home/screens/home_screen.dart';
 import 'package:sizer/sizer.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -15,14 +16,14 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _selectedIndex = 1; // Default to CATEGORY
+  int _selectedIndex = 0; // Default to CATEGORY
   final LocationService _locationService = LocationService();
   final StoreApiService _storeApiService = StoreApiService();
   final LocalStorageService _localStorageService = LocalStorageService();
   bool _isFetchingNearestStore = false;
 
   final _tabs = const [
-    _HomePlaceholder(),
+    HomeScreen(),
     CategoryScreen(),
     _CartPlaceholder(),
     _FavoritesPlaceholder(),
@@ -239,12 +240,6 @@ class _NavItem extends StatelessWidget {
 }
 
 // ── Placeholder screens ────────────────────────────────────────────────────
-
-class _HomePlaceholder extends StatelessWidget {
-  const _HomePlaceholder();
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('Home'));
-}
 
 class _CartPlaceholder extends StatelessWidget {
   const _CartPlaceholder();
