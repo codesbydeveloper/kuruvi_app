@@ -6,6 +6,7 @@ import 'package:kuruvikal/core/services/store_api_service.dart';
 import 'package:kuruvikal/core/utils/app_error_handler.dart';
 import 'package:kuruvikal/core/utils/app_snackbar.dart';
 import 'package:kuruvikal/core/utils/logger.dart';
+import 'package:kuruvikal/features/cart/screens/cart_screen.dart';
 import 'package:kuruvikal/features/category/screens/category_screen.dart';
 import 'package:kuruvikal/features/home/screens/home_screen.dart';
 import 'package:sizer/sizer.dart';
@@ -28,7 +29,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late final List<Widget> _tabs = [
     HomeScreen(etaListenable: _etaNotifier),
     const CategoryScreen(),
-    const _CartPlaceholder(),
+    const CartScreen(),
     const _FavoritesPlaceholder(),
     const _AccountPlaceholder(),
   ];
@@ -259,12 +260,6 @@ class _NavItem extends StatelessWidget {
 }
 
 // ── Placeholder screens ────────────────────────────────────────────────────
-
-class _CartPlaceholder extends StatelessWidget {
-  const _CartPlaceholder();
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('Cart'));
-}
 
 class _FavoritesPlaceholder extends StatelessWidget {
   const _FavoritesPlaceholder();

@@ -8,6 +8,7 @@ import 'package:kuruvikal/core/services/local_storage_service.dart';
 import 'package:kuruvikal/core/services/navigation_service.dart';
 import 'package:kuruvikal/features/auth/screens/login_otp_screen.dart';
 import 'package:kuruvikal/features/location/screens/select_locaion_screen.dart';
+import 'package:kuruvikal/features/product/screens/product_detail_screen.dart';
 import 'package:kuruvikal/features/profile/screens/profile_screen.dart';
 import 'package:kuruvikal/features/sub-category/screens/seasonal_fruits_screen.dart';
 import 'package:sizer/sizer.dart';
@@ -606,115 +607,118 @@ class _MiniProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                height: 10.h,
-                decoration: BoxDecoration(
-                  color: AppColors.whiteColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.borderGreyLightColor2),
-                ),
-                child: Center(
-                  child: Image.asset(
-                    ImageAssetPath.home1,
-                    width: 20.w,
-                    height: 10.h,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-              Positioned(
-                top: -6,
-                right: -6,
-                child: Container(
-                  width: 26,
-                  height: 26,
+    return GestureDetector(
+      onTap: () => NavigationService().push(ProductDetailScreen()),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  height: 10.h,
                   decoration: BoxDecoration(
-                    color: AppColors.greenColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.whiteColor, width: 2),
+                    color: AppColors.whiteColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.borderGreyLightColor2),
                   ),
-                  child: const Icon(Icons.add, color: Colors.white, size: 16),
+                  child: Center(
+                    child: Image.asset(
+                      ImageAssetPath.home1,
+                      width: 20.w,
+                      height: 10.h,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          Text(
-            product.title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.blackTextColor,
+                Positioned(
+                  top: -6,
+                  right: -6,
+                  child: Container(
+                    width: 26,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      color: AppColors.greenColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.whiteColor, width: 2),
+                    ),
+                    child: const Icon(Icons.add, color: Colors.white, size: 16),
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 4),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                product.off,
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.brownColor,
-                ),
+            const SizedBox(height: 8),
+      
+            Text(
+              product.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w700,
+                color: AppColors.blackTextColor,
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(5),
-                  border: Border.all(color: const Color(0xFFE0E0E0)),
-                ),
-                child: Text(
-                  product.size,
+            ),
+            const SizedBox(height: 4),
+      
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  product.off,
                   style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColors.greyTextColor2,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.brownColor,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                product.price,
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.greenColor,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: const Color(0xFFE0E0E0)),
+                  ),
+                  child: Text(
+                    product.size,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppColors.greyTextColor2,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-              ),
-              _SlantedStrikeText(
-                text: product.oldPrice,
-                textStyle: TextStyle(
-                  fontSize: 13.sp,
-                  color: AppColors.redColor,
-                  fontWeight: FontWeight.w700,
+              ],
+            ),
+            const SizedBox(height: 4),
+      
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  product.price,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.greenColor,
+                  ),
                 ),
-                lineColor: AppColors.redColor,
-              ),
-            ],
-          ),
-        ],
+                _SlantedStrikeText(
+                  text: product.oldPrice,
+                  textStyle: TextStyle(
+                    fontSize: 13.sp,
+                    color: AppColors.redColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  lineColor: AppColors.redColor,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
