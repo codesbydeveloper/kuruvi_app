@@ -3,6 +3,8 @@ import 'package:kuruvikal/core/constants/app_colors.dart';
 import 'package:kuruvikal/core/services/local_storage_service.dart';
 import 'package:kuruvikal/core/services/location_service.dart';
 import 'package:kuruvikal/core/services/store_api_service.dart';
+import 'package:kuruvikal/core/utils/app_error_handler.dart';
+import 'package:kuruvikal/core/utils/app_snackbar.dart';
 import 'package:kuruvikal/core/utils/logger.dart';
 import 'package:kuruvikal/features/category/screens/category_screen.dart';
 import 'package:kuruvikal/features/home/screens/home_screen.dart';
@@ -43,7 +45,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final position = await _locationService.getCurrentLocation();
     if (position == null) {
-      AppLogger.warning('Location not available. Permission denied or service off.');
+      AppSnackBar.showInfo('Location not available. Please enable location.');
       _isFetchingNearestStore = false;
       return;
     }
@@ -58,7 +60,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       await _saveEta(response);
       await _saveFirstStoreId(response);
     } catch (e) {
-      AppLogger.error('Failed to fetch nearest store: $e');
+      AppErrorHandler.handle(e, fallbackMessage: 'Failed to fetch nearest store');
     } finally {
       _isFetchingNearestStore = false;
     }
@@ -84,7 +86,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         AppLogger.success('Nearest store id saved: $storeId');
       }
     } catch (e) {
-      AppLogger.error('Failed to save nearest store id: $e');
+      AppErrorHandler.handle(e, fallbackMessage: 'Failed to save nearest store');
     }
   }
 
@@ -99,7 +101,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _etaNotifier.value = etaText;
       await _localStorageService.saveNearestStoreEta(etaText);
     } catch (e) {
-      AppLogger.error('Failed to save nearest store ETA: $e');
+      AppErrorHandler.handle(e, fallbackMessage: 'Failed to save ETA');
     }
   }
 

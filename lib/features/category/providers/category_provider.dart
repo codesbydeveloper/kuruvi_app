@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kuruvikal/core/services/category_api_service.dart';
+import 'package:kuruvikal/core/utils/app_error_handler.dart';
 import '../models/category_menu_model.dart';
 
 class CategoryProvider extends ChangeNotifier {
@@ -20,7 +21,8 @@ class CategoryProvider extends ChangeNotifier {
               (e) => CategoryMenuModel.fromJson(e))
           .toList();
     } catch (e) {
-      print("Category Error: $e");
+      AppErrorHandler.handle(e, fallbackMessage: 'Failed to load categories');
+      categories = [];
     } finally {
       isLoading = false;
       notifyListeners();

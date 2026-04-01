@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
+import '../utils/app_error_handler.dart';
 import 'local_storage_service.dart';
 
 class ApiClient {
@@ -37,12 +38,23 @@ class ApiClient {
   }
 
   dynamic _handleResponse(http.Response response) {
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode == 200) {
-      return data;
-    } else {
-      throw Exception(data['message'] ?? "Something went wrong");
+    try {
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return data;
+      }
+      final message = data is Map && data['message'] is String
+          ? data['message'] as String
+          : 'Something went wrong';
+      throw AppException(message);
+    } catch (e) {
+      if (e is AppException) {
+        AppErrorHandler.handle(e);
+        throw e;
+      }
+      const fallback = 'Unable to process server response';
+      AppErrorHandler.handle(e, fallbackMessage: fallback);
+      throw AppException(fallback);
     }
   }
 }

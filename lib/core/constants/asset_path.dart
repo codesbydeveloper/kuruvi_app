@@ -55,4 +55,6 @@ class ImageAssetPath {
   static const String clockIcon = 'assets/icons/clock-icon.svg';
   static const String dropIcon = 'assets/icons/price-drop-icon.png';
   static const String cartIcon = 'assets/icons/cart-icon.png';
+  static const String otpVerifyIcon = 'assets/icons/otp-verify-icon.png';
+  static const String indianIcon = 'assets/icons/indian-icon.svg';
 }

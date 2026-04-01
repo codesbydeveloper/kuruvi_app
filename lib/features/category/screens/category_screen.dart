@@ -4,6 +4,7 @@ import 'package:kuruvikal/core/constants/app_colors.dart';
 import 'package:kuruvikal/core/constants/asset_path.dart';
 import 'package:kuruvikal/core/services/location_service.dart';
 import 'package:kuruvikal/core/services/navigation_service.dart';
+import 'package:kuruvikal/core/utils/app_snackbar.dart';
 import 'package:kuruvikal/features/category/providers/category_provider.dart';
 import 'package:kuruvikal/features/sub-category/screens/sub_category_screen.dart';
 import 'package:provider/provider.dart';
@@ -28,12 +29,21 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   Future<void> _loadAddress() async {
-    final info = await LocationService().getCurrentAddressInfo();
-    if (!mounted) return;
-    setState(() {
-      _addressTitle = info?.title ?? 'Your Location';
-      _addressSubtitle = info?.subtitle ?? 'Location unavailable';
-    });
+    try {
+      final info = await LocationService().getCurrentAddressInfo();
+      if (!mounted) return;
+      setState(() {
+        _addressTitle = info?.title ?? 'Your Location';
+        _addressSubtitle = info?.subtitle ?? 'Location unavailable';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _addressTitle = 'Your Location';
+        _addressSubtitle = 'Location unavailable';
+      });
+      AppSnackBar.showInfo('Location unavailable. Please enable location.');
+    }
   }
 
   @override
@@ -167,7 +177,18 @@ class _CategoryScreenState extends State<CategoryScreen> {
           Expanded(
             child: provider.isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : ListView(
+                : provider.categories.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No categories available',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: AppColors.greyTextColor2,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      )
+                    : ListView(
               padding: const EdgeInsets.only(top: 8),
               children: [
                 ...provider.categories.map((category) {

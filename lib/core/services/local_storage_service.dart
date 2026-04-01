@@ -9,6 +9,7 @@ class LocalStorageService {
   static const _onboardedKey = 'onboarding_completed';
   static const _nearestStoreIdKey = "nearest_store_id";
   static const _nearestStoreEtaKey = "nearest_store_eta";
+  static const _recentSearchesKey = "recent_searches";
 
   SharedPreferences? _prefs;
 
@@ -32,9 +33,19 @@ class LocalStorageService {
     await prefs.setBool(key, value);
   }
 
+  Future<void> setStringList(String key, List<String> value) async {
+    final prefs = await _getPrefs();
+    await prefs.setStringList(key, value);
+  }
+
   Future<bool?> getBool(String key) async {
     final prefs = await _getPrefs();
     return prefs.getBool(key);
+  }
+
+  Future<List<String>> getStringList(String key) async {
+    final prefs = await _getPrefs();
+    return prefs.getStringList(key) ?? <String>[];
   }
 
   Future<void> remove(String key) async {
@@ -88,5 +99,30 @@ class LocalStorageService {
 
   Future<void> clearNearestStoreEta() async {
     await remove(_nearestStoreEtaKey);
+  }
+
+  // Recent search helpers
+  Future<List<String>> getRecentSearches() async {
+    return getStringList(_recentSearchesKey);
+  }
+
+  Future<void> saveRecentSearches(List<String> searches) async {
+    await setStringList(_recentSearchesKey, searches);
+  }
+
+  Future<void> addRecentSearch(String query) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return;
+    final list = await getRecentSearches();
+    list.removeWhere((e) => e.toLowerCase() == trimmed.toLowerCase());
+    list.insert(0, trimmed);
+    if (list.length > 5) {
+      list.removeRange(5, list.length);
+    }
+    await saveRecentSearches(list);
+  }
+
+  Future<void> clearRecentSearches() async {
+    await remove(_recentSearchesKey);
   }
 }

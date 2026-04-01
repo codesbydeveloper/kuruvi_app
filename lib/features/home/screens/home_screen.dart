@@ -1,4 +1,3 @@
-import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +6,7 @@ import 'package:kuruvikal/core/constants/asset_path.dart';
 import 'package:kuruvikal/core/services/location_service.dart';
 import 'package:kuruvikal/core/services/local_storage_service.dart';
 import 'package:kuruvikal/core/services/navigation_service.dart';
+import 'package:kuruvikal/features/auth/screens/login_otp_screen.dart';
 import 'package:kuruvikal/features/location/screens/select_locaion_screen.dart';
 import 'package:kuruvikal/features/profile/screens/profile_screen.dart';
 import 'package:kuruvikal/features/sub-category/screens/seasonal_fruits_screen.dart';
@@ -33,19 +33,33 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadAddress() async {
-    final info = await LocationService().getCurrentAddressInfo();
-    if (!mounted) return;
-    setState(() {
-      _addressLine = info?.subtitle ?? 'Location unavailable';
-    });
+    try {
+      final info = await LocationService().getCurrentAddressInfo();
+      if (!mounted) return;
+      setState(() {
+        _addressLine = info?.subtitle ?? 'Location unavailable';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _addressLine = 'Location unavailable';
+      });
+    }
   }
 
   Future<void> _loadEta() async {
-    final eta = await LocalStorageService().getNearestStoreEta();
-    if (!mounted) return;
-    setState(() {
-      _etaText = _formatEta(eta);
-    });
+    try {
+      final eta = await LocalStorageService().getNearestStoreEta();
+      if (!mounted) return;
+      setState(() {
+        _etaText = _formatEta(eta);
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _etaText = '...';
+      });
+    }
   }
 
   String _formatEta(String? eta) {
@@ -55,10 +69,59 @@ class _HomeScreenState extends State<HomeScreen> {
     return eta;
   }
 
+  Future<void> _handleLocationTap(BuildContext context) async {
+    final token = await LocalStorageService().getToken();
+    if (!mounted) return;
+    if (token != null && token.trim().isNotEmpty) {
+      NavigationService().push(const SelectLocationScreen());
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: const LoginOtpSheet(),
+        );
+      },
+    );
+  }
+
+  Future<void> _handleProfileTap(BuildContext context) async {
+    final token = await LocalStorageService().getToken();
+    if (!mounted) return;
+    if (token != null && token.trim().isNotEmpty) {
+      NavigationService().push(const ProfileScreen());
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: const LoginOtpSheet(),
+        );
+      },
+    );
+  }
+
   Widget _buildHeader() {
     final listenable = widget.etaListenable;
     if (listenable == null) {
-      return _GreenHeader(addressLine: _addressLine, etaText: _etaText);
+      return _GreenHeader(
+        addressLine: _addressLine,
+        etaText: _etaText,
+        onLocationTap: () => _handleLocationTap(context),
+        onProfileTap: () => _handleProfileTap(context),
+      );
     }
     return ValueListenableBuilder<String?>(
       valueListenable: listenable,
@@ -66,7 +129,12 @@ class _HomeScreenState extends State<HomeScreen> {
         final etaText = _formatEta(value) == '...'
             ? _etaText
             : _formatEta(value);
-        return _GreenHeader(addressLine: _addressLine, etaText: etaText);
+        return _GreenHeader(
+          addressLine: _addressLine,
+          etaText: etaText,
+          onLocationTap: () => _handleLocationTap(context),
+          onProfileTap: () => _handleProfileTap(context),
+        );
       },
     );
   }
@@ -95,9 +163,16 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _GreenHeader extends StatelessWidget {
-  const _GreenHeader({required this.addressLine, required this.etaText});
+  const _GreenHeader({
+    required this.addressLine,
+    required this.etaText,
+    required this.onLocationTap,
+    required this.onProfileTap,
+  });
   final String addressLine;
   final String etaText;
+  final VoidCallback onLocationTap;
+  final VoidCallback onProfileTap;
 
   @override
   Widget build(BuildContext context) {
@@ -114,9 +189,7 @@ class _GreenHeader extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: GestureDetector(
-                    onTap: () {
-                      NavigationService().push(const SelectLocationScreen());
-                    },
+                    onTap: onLocationTap,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -156,9 +229,7 @@ class _GreenHeader extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 GestureDetector(
-                  onTap: () {
-                    NavigationService().push(const ProfileScreen());
-                  },
+                  onTap: onProfileTap,
                   child: Container(
                     width: 36,
                     height: 36,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kuruvikal/core/services/auth_api_service.dart';
+import 'package:kuruvikal/core/utils/app_error_handler.dart';
 import '../../../core/services/local_storage_service.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -20,14 +21,19 @@ class AuthProvider extends ChangeNotifier {
 
       if (response['success'] == true) {
         otp = response['otp']?.toString();
-        print('OTP-----------------$otp');
         return true;
       } else {
-        errorMessage = response['message'];
+        errorMessage = response['message']?.toString() ?? 'Failed to send OTP';
+        AppErrorHandler.handleMessage(errorMessage!);
         return false;
       }
     } catch (e) {
-      errorMessage = "Something went wrong";
+      if (e is AppException) {
+        errorMessage = e.message;
+      } else {
+        errorMessage = "Something went wrong";
+        AppErrorHandler.handle(e, fallbackMessage: errorMessage);
+      }
       return false;
     } finally {
       isLoading = false;
@@ -52,12 +58,18 @@ class AuthProvider extends ChangeNotifier {
         await _localStorageService.saveToken(token);
         return true;
       } else {
-        errorMessage = response['message'];
+        errorMessage = response['message']?.toString() ?? 'Login failed';
+        AppErrorHandler.handleMessage(errorMessage!);
         return false;
       }
 
     } catch (e) {
-      errorMessage = "Login failed";
+      if (e is AppException) {
+        errorMessage = e.message;
+      } else {
+        errorMessage = "Login failed";
+        AppErrorHandler.handle(e, fallbackMessage: errorMessage);
+      }
       return false;
     } finally {
       isLoading = false;

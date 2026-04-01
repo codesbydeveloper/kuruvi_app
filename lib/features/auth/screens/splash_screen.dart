@@ -5,7 +5,6 @@ import 'package:kuruvikal/core/constants/app_colors.dart';
 import 'package:kuruvikal/core/constants/asset_path.dart';
 import 'package:kuruvikal/core/services/navigation_service.dart';
 import 'package:kuruvikal/core/services/local_storage_service.dart';
-import 'package:kuruvikal/features/auth/screens/login_otp_screen.dart';
 import 'package:kuruvikal/features/onboarding/screens/onboarding_screen.dart';
 import 'package:kuruvikal/features/dashboard/screens/dahsboard_screen.dart';
 import 'package:sizer/sizer.dart';
@@ -42,13 +41,7 @@ class _SplashScreenState extends State<SplashScreen> {
       return;
     }
 
-    final token = await _localStorageService.getToken();
-
-    if (token != null && token.isNotEmpty) {
-      _goNext(const DashboardScreen());
-    } else {
-      _goNext(const DashboardScreen());
-    }
+   _goNext(const DashboardScreen());
   }
 
   void _goNext(Widget screen) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kuruvikal/core/services/inventory_api_service.dart';
 import 'package:kuruvikal/core/services/local_storage_service.dart';
 import 'package:kuruvikal/core/services/sub_category_api_service.dart';
+import 'package:kuruvikal/core/utils/app_error_handler.dart';
 import 'package:kuruvikal/features/sub-category/models/inventory_product_model.dart';
 import 'package:kuruvikal/features/sub-category/models/sub_category_model.dart';
 
@@ -25,7 +26,7 @@ class SubCategoryProvider extends ChangeNotifier {
       category = SubCategoryResponse.fromJson(response);
       subCategories = category?.subCategories ?? [];
     } catch (e) {
-      print("SubCategory Error: $e");
+      AppErrorHandler.handle(e, fallbackMessage: 'Failed to load sub categories');
       category = null;
       subCategories = [];
     } finally {
@@ -53,7 +54,7 @@ class SubCategoryProvider extends ChangeNotifier {
           .map<InventoryProduct>((e) => InventoryProduct.fromJson(e))
           .toList();
     } catch (e) {
-      print("Products Error: $e");
+      AppErrorHandler.handle(e, fallbackMessage: 'Failed to load products');
       products = [];
     } finally {
       isProductsLoading = false;

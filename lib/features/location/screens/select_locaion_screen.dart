@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:kuruvikal/core/services/local_storage_service.dart';
 import 'package:kuruvikal/core/services/location_service.dart';
 import 'package:kuruvikal/core/services/navigation_service.dart';
 import 'package:kuruvikal/core/constants/app_colors.dart';
@@ -16,25 +18,32 @@ class SelectLocationScreen extends StatefulWidget {
 class _SelectLocationScreenState extends State<SelectLocationScreen> {
   GoogleMapController? _mapController;
   final LocationService _locationService = LocationService();
+  final LocalStorageService _localStorageService = LocalStorageService();
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   LatLng? _currentLatLng;
   AddressInfo? _addressInfo;
   bool _isLoading = false;
   bool _isDragging = false;
   List<PlaceSuggestion> _suggestions = [];
+  List<String> _recentSearches = [];
+  bool _showRecent = false;
   Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
     _initCurrentLocation();
+    _loadRecentSearches();
+    _searchFocusNode.addListener(_onSearchFocusChanged);
   }
 
   @override
   void dispose() {
     _mapController?.dispose();
     _searchController.dispose();
+    _searchFocusNode.dispose();
     _debounce?.cancel();
     super.dispose();
   }
@@ -75,6 +84,23 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
     final target = _currentLatLng;
     if (target != null) {
       await _fetchAddress(target);
+      HapticFeedback.lightImpact();
+    }
+  }
+
+  Future<void> _loadRecentSearches() async {
+    final list = await _localStorageService.getRecentSearches();
+    if (!mounted) return;
+    setState(() => _recentSearches = list);
+  }
+
+  void _onSearchFocusChanged() {
+    if (!_searchFocusNode.hasFocus) {
+      setState(() => _showRecent = false);
+      return;
+    }
+    if (_searchController.text.trim().isEmpty) {
+      setState(() => _showRecent = true);
     }
   }
 
@@ -84,9 +110,14 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
       final query = value.trim();
       if (query.isEmpty) {
         if (!mounted) return;
-        setState(() => _suggestions = []);
+        setState(() {
+          _suggestions = [];
+          _showRecent = _recentSearches.isNotEmpty && _searchFocusNode.hasFocus;
+        });
         return;
       }
+      if (!mounted) return;
+      setState(() => _showRecent = false);
       final results = await _locationService.fetchPlaceSuggestions(query);
       if (!mounted) return;
       setState(() => _suggestions = results);
@@ -97,6 +128,8 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
     FocusScope.of(context).unfocus();
     _searchController.text = suggestion.description;
     setState(() => _suggestions = []);
+    await _localStorageService.addRecentSearch(suggestion.description);
+    await _loadRecentSearches();
 
     final latLng = await _locationService.fetchLatLngFromPlaceId(
       suggestion.placeId,
@@ -106,6 +139,13 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
     await _mapController?.animateCamera(CameraUpdate.newLatLng(latLng));
     await _fetchAddress(latLng);
   }
+
+  void _onRecentTap(String text) {
+    _searchController.text = text;
+    _onSearchChanged(text);
+  }
+
+  // Use current location CTA removed per request.
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +176,7 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
           Center(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
-              margin: EdgeInsets.only(bottom: _isDragging ? 24 : 0),
+              margin: EdgeInsets.only(bottom: _isDragging ? 26 : 0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -220,6 +260,7 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
                           ),
                           child: TextField(
                             controller: _searchController,
+                            focusNode: _searchFocusNode,
                             onChanged: _onSearchChanged,
                             decoration: InputDecoration(
                               hintText: 'Search for the location...',
@@ -277,6 +318,53 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
                                 ),
                               ),
                             ),
+                        if (_showRecent && _recentSearches.isNotEmpty)
+                          Material(
+                            elevation: 4,
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxHeight: 220),
+                              child: ListView.separated(
+                                shrinkWrap: true,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 6),
+                                itemCount: _recentSearches.length + 1,
+                                separatorBuilder: (_, __) =>
+                                    const Divider(height: 1),
+                                itemBuilder: (context, index) {
+                                  if (index == 0) {
+                                    return const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 8,
+                                      ),
+                                      child: Text(
+                                        'Recent searches',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  final text = _recentSearches[index - 1];
+                                  return ListTile(
+                                    dense: true,
+                                    leading: const Icon(Icons.history, size: 18),
+                                    title: Text(
+                                      text,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                    onTap: () => _onRecentTap(text),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -335,13 +423,19 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'Order will be delivered here',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.black45,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Order will be delivered here',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.black45,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 10),
                   _isLoading ? _buildAddressShimmer() : _buildAddressRow(),
@@ -350,10 +444,11 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: _isLoading
+                      onPressed: (_isLoading ||
+                              _addressInfo == null ||
+                              (_addressInfo?.subtitle ?? '').isEmpty)
                           ? null
                           : () {
-                              // // Pass address back to caller
                               // NavigationService().goBack(_addressInfo);
                             },
                       style: ElevatedButton.styleFrom(

@@ -6,7 +6,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:kuruvikal/core/constants/api_keys.dart';
 import 'package:kuruvikal/core/services/navigation_service.dart';
-import 'package:kuruvikal/core/utils/logger.dart';
+import 'package:kuruvikal/core/utils/app_error_handler.dart';
+import 'package:kuruvikal/core/utils/app_snackbar.dart';
 import 'package:kuruvikal/core/widgets/location_permission_dialog.dart';
 import 'package:kuruvikal/core/widgets/location_service_disabled_dialog.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -84,7 +85,7 @@ class LocationService {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        AppLogger.warning('Location services are disabled');
+        AppSnackBar.showInfo('Location services are disabled');
         final approved = await _showServiceDisabledDialog();
         if (!approved) return null;
         final enabledAfterSettings = await _waitForServiceEnabled();
@@ -122,7 +123,7 @@ class LocationService {
 
       return position;
     } catch (e) {
-      AppLogger.error('Error getting current location: $e');
+      AppErrorHandler.handle(e, fallbackMessage: 'Unable to get location');
       return null;
     }
   }
@@ -133,7 +134,7 @@ class LocationService {
 
     try {
       if (_googleApiKey.isEmpty) {
-        AppLogger.warning('GOOGLE_GEOCODING_API_KEY is not set');
+        AppSnackBar.showInfo('Location unavailable');
         return const AddressInfo(
           title: 'Your Location',
           subtitle: 'Location unavailable',
@@ -145,7 +146,7 @@ class LocationService {
         longitude: position.longitude,
       );
     } catch (e) {
-      AppLogger.error('Error getting address: $e');
+      AppErrorHandler.handle(e, fallbackMessage: 'Unable to get address');
       return null;
     }
   }
@@ -161,14 +162,14 @@ class LocationService {
 
     final response = await http.get(uri);
     if (response.statusCode != 200) {
-      AppLogger.error('Geocode HTTP ${response.statusCode}: ${response.body}');
+      AppErrorHandler.handleMessage('Unable to fetch address');
       return null;
     }
 
     final data = jsonDecode(response.body);
     if (data is! Map) return null;
     if (data['status'] != 'OK') {
-      AppLogger.warning('Geocode status: ${data['status']}');
+      AppSnackBar.showInfo('Location unavailable');
       return null;
     }
 
@@ -203,7 +204,7 @@ class LocationService {
   }) async {
     try {
       if (_googleApiKey.isEmpty) {
-        AppLogger.warning('GOOGLE_GEOCODING_API_KEY is not set');
+        AppSnackBar.showInfo('Location unavailable');
         return const AddressInfo(
           title: 'Your Location',
           subtitle: 'Location unavailable',
@@ -214,7 +215,7 @@ class LocationService {
         longitude: longitude,
       );
     } catch (e) {
-      AppLogger.error('Error fetching address from lat/lng: $e');
+      AppErrorHandler.handle(e, fallbackMessage: 'Unable to fetch address');
       return null;
     }
   }
@@ -234,15 +235,14 @@ class LocationService {
 
     final response = await http.get(uri);
     if (response.statusCode != 200) {
-      AppLogger.error(
-          'Places autocomplete HTTP ${response.statusCode}: ${response.body}');
+      AppErrorHandler.handleMessage('Unable to fetch places');
       return [];
     }
 
     final data = jsonDecode(response.body);
     if (data is! Map) return [];
     if (data['status'] != 'OK') {
-      AppLogger.warning('Places autocomplete status: ${data['status']}');
+      AppSnackBar.showInfo('No places found');
       return [];
     }
 
@@ -275,15 +275,14 @@ class LocationService {
 
     final response = await http.get(uri);
     if (response.statusCode != 200) {
-      AppLogger.error(
-          'Place details HTTP ${response.statusCode}: ${response.body}');
+      AppErrorHandler.handleMessage('Unable to fetch place details');
       return null;
     }
 
     final data = jsonDecode(response.body);
     if (data is! Map) return null;
     if (data['status'] != 'OK') {
-      AppLogger.warning('Place details status: ${data['status']}');
+      AppSnackBar.showInfo('Place details unavailable');
       return null;
     }
 
