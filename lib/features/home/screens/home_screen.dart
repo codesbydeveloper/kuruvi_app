@@ -1,4 +1,3 @@
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kuruvikal/core/constants/app_colors.dart';
@@ -12,7 +11,6 @@ import 'package:kuruvikal/features/product/screens/product_detail_screen.dart';
 import 'package:kuruvikal/features/profile/screens/profile_screen.dart';
 import 'package:kuruvikal/features/sub-category/screens/seasonal_fruits_screen.dart';
 import 'package:sizer/sizer.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.etaListenable});
@@ -153,6 +151,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const _OfferCard(),
             const SizedBox(height: 14),
             const _MostShoppedSection(),
+            const SizedBox(height: 14),
+            const _BannerImage(),
             const SizedBox(height: 14),
             const _LowestPriceSection(),
             const SizedBox(height: 20),
@@ -465,77 +465,27 @@ class _OfferCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderGreyLightColor2),
-      ),
+    final deals = const [
+      ImageAssetPath.deal1,
+      ImageAssetPath.deal2,
+      ImageAssetPath.deal3,
+      ImageAssetPath.deal4,
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    SvgPicture.asset(
-                      ImageAssetPath.clockIcon,
-                      width: 14,
-                      height: 14,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Expires in 15 days',
-                      style: TextStyle(
-                        color: AppColors.greenColor,
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '₹100 FREE cash just for you!',
-                  style: TextStyle(
-                    color: AppColors.blackTextColor,
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'On your first order above ₹249. T&C Applied',
-                  style: TextStyle(
-                    color: AppColors.greyTextColor2,
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Container(
-            width: 54,
-            height: 54,
-            decoration: const BoxDecoration(
-              color: Color(0xFFEBEBEB),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Image.asset(
-                ImageAssetPath.orderIcon,
-                width: 35,
-                height: 35,
-                fit: BoxFit.contain,
+        children: deals.map((asset) {
+          return Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(asset, fit: BoxFit.cover),
               ),
             ),
-          ),
-        ],
+          );
+        }).toList(),
       ),
     );
   }
@@ -650,7 +600,7 @@ class _MiniProductCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-      
+
             Text(
               product.title,
               maxLines: 1,
@@ -662,7 +612,7 @@ class _MiniProductCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-      
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -675,7 +625,10 @@ class _MiniProductCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(5),
@@ -693,7 +646,7 @@ class _MiniProductCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
-      
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -720,6 +673,20 @@ class _MiniProductCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _BannerImage extends StatelessWidget {
+  const _BannerImage();
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      ImageAssetPath.homeBannerImage,
+      width: double.infinity,
+      height: 22.h,
+      fit: BoxFit.cover,
     );
   }
 }

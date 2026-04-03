@@ -7,6 +7,7 @@ import 'package:kuruvikal/core/services/local_storage_service.dart';
 import 'package:kuruvikal/core/services/location_service.dart';
 import 'package:kuruvikal/core/services/navigation_service.dart';
 import 'package:kuruvikal/core/constants/app_colors.dart';
+import 'package:kuruvikal/features/location/screens/confirm_location_screen.dart';
 
 class SelectLocationScreen extends StatefulWidget {
   const SelectLocationScreen({super.key});
@@ -449,7 +450,11 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
                               (_addressInfo?.subtitle ?? '').isEmpty)
                           ? null
                           : () {
-                              // NavigationService().goBack(_addressInfo);
+                              NavigationService().push(
+                                ConfirmLocationScreen(
+                                  addressInfo: _addressInfo,
+                                ),
+                              );
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.greenColor,

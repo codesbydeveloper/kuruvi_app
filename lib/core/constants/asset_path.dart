@@ -45,6 +45,12 @@ class ImageAssetPath {
   static const String categoryIcon = 'assets/images/counter_white_icon.png';
   static const String houseImage = 'assets/images/House.png';
 
+  static const String deal1 = 'assets/product/deal1.png';
+  static const String deal2 = 'assets/product/deal2.png';
+  static const String deal3 = 'assets/product/deal3.png';
+  static const String deal4 = 'assets/product/deal4.png';
+  static const String homeBannerImage = 'assets/product/home-banner.png';
+
   //sub category screen
   static const String subCategoryBannerImage = 'assets/images/banner.png';
 
