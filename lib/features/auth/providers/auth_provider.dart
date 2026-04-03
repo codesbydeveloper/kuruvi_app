@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kuruvikal/core/services/auth_api_service.dart';
 import 'package:kuruvikal/core/utils/app_error_handler.dart';
+import 'package:kuruvikal/core/utils/logger.dart';
 import '../../../core/services/local_storage_service.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -21,6 +22,7 @@ class AuthProvider extends ChangeNotifier {
 
       if (response['success'] == true) {
         otp = response['otp']?.toString();
+        AppLogger.log("OTP sent: $otp");
         return true;
       } else {
         errorMessage = response['message']?.toString() ?? 'Failed to send OTP';

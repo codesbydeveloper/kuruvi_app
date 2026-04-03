@@ -101,24 +101,21 @@ class _VerifyMobileScreenState extends State<VerifyMobileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
-      body: SafeArea(
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: _VerifyOtpCard(
-            phoneNumber: widget.phoneNumber,
-            otpController: _otpController,
-            formKey: formKey,
-            isLoading: isLoading,
-            isShowResend: isShowResend,
-            timerValue: timerValue,
-            onVerify: verifyOtp,
-            onResend: () {
-              _resendOtp(widget.phoneNumber);
-              _startTimer();
-            },
-            formatTimer: _formatTimer,
-          ),
+      body: Align(
+        alignment: Alignment.bottomCenter,
+        child: _VerifyOtpCard(
+          phoneNumber: widget.phoneNumber,
+          otpController: _otpController,
+          formKey: formKey,
+          isLoading: isLoading,
+          isShowResend: isShowResend,
+          timerValue: timerValue,
+          onVerify: verifyOtp,
+          onResend: () {
+            _resendOtp(widget.phoneNumber);
+            _startTimer();
+          },
+          formatTimer: _formatTimer,
         ),
       ),
     );

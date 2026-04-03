@@ -2,7 +2,7 @@ class ApiConstants {
   static const bool isProduction = false;
 
   static const String prodBaseUrl = "https://admin.kuruvikal.in/";
-  static const String localBaseUrl = "http://43.205.241.171/api/";
+  static const String localBaseUrl = "http://43.205.241.171/api/v1/";
 
   static String get baseUrl =>
       isProduction ? prodBaseUrl : localBaseUrl;
